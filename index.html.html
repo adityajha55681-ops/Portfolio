@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aditya's Portfolio Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --bg: #060612;
+    --surface: #0d0d1f;
+    --card: #111127;
+    --border: #1e1e3f;
+    --gold: #f0b429;
+    --green: #00e676;
+    --red: #ff1744;
+    --blue: #4fc3f7;
+    --text: #e8eaf6;
+    --muted: #5c6bc0;
+    --font-display: 'Rajdhani', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,195,247,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,195,247,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 32px;
+    background: linear-gradient(135deg, #0d0d1f, #111127);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .header-left h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, var(--gold), #fff, var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header-left p { color: var(--muted); font-size: 0.85rem; margin-top: 4px; font-family: var(--font-mono); }
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,230,118,0.1);
+    border: 1px solid rgba(0,230,118,0.3);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--green);
+    font-family: var(--font-mono);
+  }
+  .live-dot {
+    width: 8px; height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+
+  /* SUMMARY CARDS */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .summary-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+    animation: slideUp 0.5s ease both;
+  }
+  .summary-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent, var(--gold));
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .summary-label { font-size: 0.7rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+  .summary-value { font-size: 1.6rem; font-weight: 700; font-family: var(--font-mono); }
+  .summary-sub { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+
+  /* MAIN GRID */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+
+  /* STOCK CARDS */
+  .section-title {
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .stocks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .stock-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    animation: slideUp 0.5s ease both;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+  }
+  .stock-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--gold);
+    box-shadow: 0 12px 40px rgba(240,180,41,0.1);
+  }
+  .stock-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .stock-symbol { font-size: 1.1rem; font-weight: 700; color: #fff; letter-spacing: 1px; }
+  .stock-name { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .sector-badge {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(79,195,247,0.1);
+    color: var(--blue);
+    border: 1px solid rgba(79,195,247,0.2);
+    letter-spacing: 1px;
+  }
+  .stock-price { font-size: 1.5rem; font-weight: 700; font-family: var(--font-mono); color: #fff; margin-bottom: 8px; }
+  .sparkline { width: 100%; height: 40px; margin-bottom: 12px; }
+  .stock-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .stat-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 1px; }
+  .stat-value { font-size: 0.85rem; font-weight: 600; font-family: var(--font-mono); color: var(--text); }
+  .pnl-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+  .positive { background: rgba(0,230,118,0.1); color: var(--green); border: 1px solid rgba(0,230,118,0.2); }
+  .negative { background: rgba(255,23,68,0.1); color: var(--red); border: 1px solid rgba(255,23,68,0.2); }
+
+  /* DONUT CHART PANEL */
+  .chart-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+  }
+  .chart-wrap { position: relative; width: 200px; height: 200px; margin: 20px auto; }
+
+  /* SECTOR TABLE */
+  .sector-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 28px;
+    overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 12px; font-size: 0.88rem; border-bottom: 1px solid rgba(30,30,63,0.5); }
+  tr:hover td { background: rgba(79,195,247,0.03); }
+  .sec-badge {
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: rgba(240,180,41,0.1);
+    color: var(--gold);
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .pos { color: var(--green); font-weight: 700; }
+  .neg { color: var(--red); font-weight: 700; }
+  .alloc-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .alloc-bar { height: 6px; background: linear-gradient(90deg, var(--blue), var(--gold)); border-radius: 3px; min-width: 4px; }
+
+  /* NEWS */
+  .news-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 28px;
+  }
+  .news-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.2s;
+  }
+  .news-item:last-child { border-bottom: none; }
+  .news-item:hover { color: var(--gold); padding-left: 8px; }
+  .news-symbol {
+    min-width: 70px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--blue);
+    background: rgba(79,195,247,0.1);
+    border: 1px solid rgba(79,195,247,0.2);
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+  .news-content { flex: 1; }
+  .news-title { font-size: 0.88rem; line-height: 1.4; margin-bottom: 4px; }
+  .news-date { font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); }
+  .news-arrow { color: var(--muted); font-size: 1.2rem; }
+  .no-news { color: var(--muted); text-align: center; padding: 20px; font-size: 0.88rem; }
+
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    padding: 20px;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    border-top: 1px solid var(--border);
+    margin-top: 10px;
+  }
+
+  @media (max-width: 900px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .main-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <h1>⚡ ADITYA'S PORTFOLIO</h1>
+      <p>🕐 Last updated: 28 Feb 2026 • 11:01 PM</p>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      LIVE DATA
+    </div>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-grid">
+    <div class="summary-card" style="--accent: #5c6bc0; animation-delay: 0s">
+      <div class="summary-label">Total Invested</div>
+      <div class="summary-value" style="color: var(--blue)">₹12,900</div>
+      <div class="summary-sub">2 stocks tracked</div>
+    </div>
+    <div class="summary-card" style="--accent: var(--gold); animation-delay: 0.1s">
+      <div class="summary-label">Current Value</div>
+      <div class="summary-value" style="color: var(--gold)">₹8,286</div>
+      <div class="summary-sub">Live market prices</div>
+    </div>
+    <div class="summary-card" style="--accent: #ff1744; animation-delay: 0.2s">
+      <div class="summary-label">Total P&L</div>
+      <div class="summary-value neg-text">▼ ₹4,614</div>
+      <div class="summary-sub">Unrealised gain/loss</div>
+    </div>
+    <div class="summary-card" style="--accent: #ff1744; animation-delay: 0.3s">
+      <div class="summary-label">Overall Return</div>
+      <div class="summary-value neg-text">▼ 35.77%</div>
+      <div class="summary-sub">Since inception</div>
+    </div>
+  </div>
+
+  <!-- STOCKS + CHART -->
+  <div class="main-grid">
+    <div>
+      <div class="section-title">Holdings</div>
+      <div class="stocks-grid">
+        
+        <div class="stock-card" style="animation-delay: 0.0s">
+            <div class="stock-header">
+                <div>
+                    <div class="stock-symbol">GOLDBEES</div>
+                    <div class="stock-name">Gold BeES ETF</div>
+                </div>
+                <div class="sector-badge">Gold</div>
+            </div>
+            <div class="stock-price">₹131.64</div>
+            <canvas class="sparkline" id="spark_0" width="200" height="50" data-values='[130.02, 131.23, 131.68, 130.49, 131.64]'></canvas>
+            <div class="stock-stats">
+                <div>
+                    <div class="stat-label">Qty</div>
+                    <div class="stat-value">10</div>
+                </div>
+                <div>
+                    <div class="stat-label">Avg Price</div>
+                    <div class="stat-value">₹65</div>
+                </div>
+                <div>
+                    <div class="stat-label">Invested</div>
+                    <div class="stat-value">₹650</div>
+                </div>
+                <div>
+                    <div class="stat-label">Current</div>
+                    <div class="stat-value">₹1,316</div>
+                </div>
+            </div>
+            <div class="pnl-bar positive">
+                <span>▲ ₹666</span>
+                <span class="pnl-pct">▲ 102.52%</span>
+            </div>
+        </div>
+        <div class="stock-card" style="animation-delay: 0.1s">
+            <div class="stock-header">
+                <div>
+                    <div class="stock-symbol">RELIANCE</div>
+                    <div class="stock-name">Reliance Industries</div>
+                </div>
+                <div class="sector-badge">Energy</div>
+            </div>
+            <div class="stock-price">₹1,393.90</div>
+            <canvas class="sparkline" id="spark_1" width="200" height="50" data-values='[1428.0, 1428.8, 1398.5, 1406.8, 1393.9]'></canvas>
+            <div class="stock-stats">
+                <div>
+                    <div class="stat-label">Qty</div>
+                    <div class="stat-value">5</div>
+                </div>
+                <div>
+                    <div class="stat-label">Avg Price</div>
+                    <div class="stat-value">₹2,450</div>
+                </div>
+                <div>
+                    <div class="stat-label">Invested</div>
+                    <div class="stat-value">₹12,250</div>
+                </div>
+                <div>
+                    <div class="stat-label">Current</div>
+                    <div class="stat-value">₹6,970</div>
+                </div>
+            </div>
+            <div class="pnl-bar negative">
+                <span>▼ ₹5,280</span>
+                <span class="pnl-pct">▼ 43.11%</span>
+            </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="chart-panel">
+        <div class="section-title">Sector Allocation</div>
+        <div class="chart-wrap">
+          <canvas id="donutChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTOR TABLE -->
+  <div class="sector-panel">
+    <div class="section-title">Sector Breakdown</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Sector</th><th>Stocks</th><th>Invested</th><th>Current</th><th>P&L</th><th>Allocation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+            <td><span class="sec-badge">Energy</span></td>
+            <td>1</td>
+            <td>₹12,250</td>
+            <td>₹6,970</td>
+            <td class="neg">▼ ₹5,280</td>
+            <td>
+                <div class="alloc-bar-wrap">
+                    <div class="alloc-bar" style="width:84.1%"></div>
+                    <span>84.1%</span>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td><span class="sec-badge">Gold</span></td>
+            <td>1</td>
+            <td>₹650</td>
+            <td>₹1,316</td>
+            <td class="pos">▲ ₹666</td>
+            <td>
+                <div class="alloc-bar-wrap">
+                    <div class="alloc-bar" style="width:15.9%"></div>
+                    <span>15.9%</span>
+                </div>
+            </td>
+        </tr></tbody>
+    </table>
+  </div>
+
+  <!-- NEWS -->
+  <div class="news-panel">
+    <div class="section-title">Latest News</div>
+    
+        <a href="https://finance.yahoo.com/news/us-china-challenge-modi-india-040010099.html" target="_blank" class="news-item">
+            <div class="news-symbol">RELIANCE</div>
+            <div class="news-content">
+                <div class="news-title">US, China Challenge Modi’s ‘Make in India’ Factory Incentives</div>
+                <div class="news-date">2026-02-26</div>
+            </div>
+            <div class="news-arrow">→</div>
+        </a>
+        <a href="https://finance.yahoo.com/news/chevron-iraq-venezuela-moves-recast-011017055.html" target="_blank" class="news-item">
+            <div class="news-symbol">RELIANCE</div>
+            <div class="news-content">
+                <div class="news-title">Chevron’s Iraq And Venezuela Moves Recast Growth, Risk And Valuation Profile</div>
+                <div class="news-date">2026-02-26</div>
+            </div>
+            <div class="news-arrow">→</div>
+        </a>
+        <a href="https://finance.yahoo.com/news/indias-richest-man-mukesh-ambani-003110045.html" target="_blank" class="news-item">
+            <div class="news-symbol">RELIANCE</div>
+            <div class="news-content">
+                <div class="news-title">India's Richest Man, Mukesh Ambani, Is Taking On Elon Musk's Tesla, Mark Zuckerberg's Meta With Budget-Friendly Smart Glasses, Robots</div>
+                <div class="news-date">2026-02-25</div>
+            </div>
+            <div class="news-arrow">→</div>
+        </a>
+  </div>
+
+  <div class="footer">
+    Built by Aditya · CFA Level 1 · Python + yfinance · 28 Feb 2026 • 11:01 PM
+  </div>
+
+</div>
+
+<script>
+// Donut chart
+const ctx = document.getElementById('donutChart').getContext('2d');
+new Chart(ctx, {
+  type: 'doughnut',
+  data: {
+    labels: ["Gold", "Energy"],
+    datasets: [{
+      data: [1316.4, 6969.5],
+      backgroundColor: ['#f0b429','#4fc3f7','#00e676','#ff1744','#ce93d8','#ffb74d'],
+      borderColor: '#111127',
+      borderWidth: 3,
+      hoverOffset: 8
+    }]
+  },
+  options: {
+    cutout: '70%',
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { color: '#9fa8da', font: { family: 'Rajdhani', size: 12 }, padding: 12 }
+      }
+    },
+    animation: { animateRotate: true, duration: 1200 }
+  }
+});
+
+// Sparklines
+document.querySelectorAll('.sparkline').forEach(canvas => {
+  const values = JSON.parse(canvas.dataset.values);
+  if (values.length < 2) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = max - min || 1;
+  const isUp = values[values.length-1] >= values[0];
+  const color = isUp ? '#00e676' : '#ff1744';
+  const step = w / (values.length - 1);
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, isUp ? 'rgba(0,230,118,0.3)' : 'rgba(255,23,68,0.3)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+  ctx.beginPath();
+  values.forEach((v, i) => {
+    const x = i * step;
+    const y = h - ((v - min) / range) * (h - 6) - 3;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Fill area
+  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+});
+</script>
+</body>
+</html>
